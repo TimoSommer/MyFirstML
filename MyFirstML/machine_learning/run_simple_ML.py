@@ -182,7 +182,7 @@ if __name__ == '__main__':
                 'MAE': sklearn.metrics.mean_absolute_error,
                 # 'MSE': sklearn.metrics.mean_squared_error,
                 }
-    
+
     # Secondary options you will usually not need to change (but you can if you want to)
     hparams_file = 'hparams.yml'  # str: path to hyperparameters for models
     outdir = Path('', '../..', 'results', 'runs')        # directory for saving results, in which a new directory will be created for the run
