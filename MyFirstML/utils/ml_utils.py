@@ -1,20 +1,24 @@
 """
 Utility functions for machine learning.
 """
-from typing import Tuple, List
+from typing import Tuple, List, Union
 import os
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import RepeatedKFold, ShuffleSplit, LeaveOneGroupOut, GroupKFold, GroupShuffleSplit
 import yaml
+from pathlib import Path
 
-
-def get_hparams(hparams_file):
-    """Get hyperparameter from yaml file."""
-    if os.path.exists(hparams_file):
+def get_hparams(hparams_file: Union[str,Path]) -> dict:
+    """
+    Get hyperparameters from .yaml file.
+    """
+    hparams_file = Path(str(hparams_file))      # convert str to Path()
+    if hparams_file.exists():
         hparams = yaml.load(open(hparams_file,"r"), Loader=yaml.FullLoader)
     else:
         raise ValueError(f'No hyperparameter file "{hparams_file}" found.')
+
     return(hparams)
 
 
@@ -30,17 +34,33 @@ def net_pattern(n_layers, base_size, end_size):
     return (layer_sizes)
 
 
-def load_data(dataset, features, targets, use_data_frac=None, shuffle=True, reset_index=True) -> pd.DataFrame:
+def load_data(
+                dataset: Union[str,Path],
+                features: List[str],
+                targets: Union[str,List[str]],
+                use_data_frac: Union[float,None] = None,
+                shuffle: bool = True,
+                reset_index: bool = True,
+                header: int = 0,
+                ) -> pd.DataFrame:
     """
-    Load ML input data from csv file.
+    Load ML input data from csv file into pandas DataFrame.
+    @param dataset: Path to csv file containing the data.
+    @param features: List of features for double checking if all features are present.
+    @param targets: List of targets for double checking if all targets are present.
+    @param use_data_frac: Fraction of data to use, between 0 and 1. If None, all data is used.
     """
     if isinstance(targets, str):
         targets = [targets]
 
-    data = pd.read_csv(dataset)
+    data = pd.read_csv(dataset, header=header)
 
-    # Use only a fraction of the data
+    # Reduce data to a fraction of the full data. Mainly useful for faster runtime for testing purposes.
     if use_data_frac is not None:
+        # Check if use_data_frac is between 0 and 1:
+        if use_data_frac <= 0 or use_data_frac >= 1:
+            raise ValueError(f'use_data_frac must be between 0 and 1 or None, but is {use_data_frac}.')
+
         data = data.sample(frac=use_data_frac)
 
     # Shuffle data

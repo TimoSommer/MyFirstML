@@ -322,6 +322,9 @@ class RunML(object):
         if not reference_run.exists():
             print(f'Reference run "{reference_run}" does not exist. Exit without checking output files.')
             return
+        elif reference_run.absolute() == self.outdir.absolute():
+            print(f'Reference run "{reference_run}" is the same as the current run. Exit without checking output files.')
+            return
 
         data_path = self.all_data_outpath.name
         scores_path = self.all_scores_outpath.name

@@ -101,10 +101,10 @@ def get_all_models(hparams: dict, n_features: int, use_models: List[str]) -> dic
                                                                 )
         all_models['GP'] = GP
 
-    # sort all_models in order of use_models
+    # Sort all_models in order of use_models
     all_models = {k: deepcopy(all_models[k]) for k in use_models}
 
-    return (all_models)
+    return all_models
 
 
 def main(experiment, dataset, reference_run, features, target, CV, n_reps, trainfrac, group, scores, outdir, hparams_file, use_data_frac, scaler, random_seed, use_models):
@@ -114,19 +114,29 @@ def main(experiment, dataset, reference_run, features, target, CV, n_reps, train
     ##############################################
     print(f'Starting experiment "{experiment}".')
 
+    # Record start time for printing the duration of the run.
+    starttime = datetime.now()
+
     # Set random seeds for deterministic results. If you ever use tensorflow or pytorch, you will need to set their own random seeds as well.
     random.seed(random_seed)
     np.random.seed(random_seed)
 
-    # Load hyperparameters
+    # Load hyperparameters from file
     hparams = get_hparams(hparams_file=hparams_file)
 
     # Define models
     models = get_all_models(hparams=hparams, n_features=len(features), use_models=use_models)
 
-    # Load data
-    df = load_data(dataset=dataset, features=features, targets=target, use_data_frac=use_data_frac, shuffle=True,
-                   reset_index=True)
+    # Load data from .csv into a pd.DataFrame
+    df = load_data(
+                    dataset=dataset,
+                    features=features,
+                    targets=target,
+                    use_data_frac=use_data_frac,
+                    shuffle=True,
+                    reset_index=True,
+                    header=1,
+                    )
 
     # Split data into test and train set
     df, CV_cols = get_train_test_splits(df, CV, n_reps, trainfrac=trainfrac, group=group)
@@ -151,7 +161,11 @@ def main(experiment, dataset, reference_run, features, target, CV, n_reps, train
     if reference_run is not None:
         ml.check_if_output_same_as_reference(reference_run=reference_run, detailed=False)
 
-    print('\nDone.')
+    # Print duration of the run
+    duration = datetime.now() - starttime
+    print(f'\nScript duration:  {duration}')
+
+    print('Done.')
 
     return ml
 
@@ -162,10 +176,10 @@ if __name__ == '__main__':
     # Please set these options to control the ML script.
 
     # General
-    experiment = 'test'     # str: name of experiment
+    experiment = 'test'     # str: name of experiment for labeling the output directory and printing.
     random_seed = 43        # [int,None]: random seed for reproducibility. Set to None for non-deterministic results.
     use_models = ['1NN', 'LR', 'RF', 'XGB', 'NN', 'GP']                     # list: models to use out of ['1NN', 'LR', 'RF', 'XGB', 'NN', 'GP']
-    reference_run = Path('..', '..', 'results', 'runs', 'results_1_test')   # Provide a path of a previous run directory to check for changes in output files. Incredibly useful for refactoring and writing code.
+    reference_run = Path('..', '..', 'results', 'runs', 'results_0_test')   # Provide a path of a previous run directory to check for changes in output files. Incredibly useful for refactoring and writing code.
     # Cross validation
     CV = 'KFold'            # str: cross-validation method: 'KFold' or 'Random'
     n_reps = 5              # int: number of repetitions for cross-validation (the K in Kfold or the number of repetitions for Random)
@@ -185,13 +199,12 @@ if __name__ == '__main__':
 
     # Secondary options you will usually not need to change (but you can if you want to)
     hparams_file = 'hparams.yml'  # str: path to hyperparameters for models
-    outdir = Path('', '../..', 'results', 'runs')        # directory for saving results, in which a new directory will be created for the run
+    outdir = Path('', '../..', 'results', 'runs')        # directory for saving results, in which a new directory will be created for each run
 
     ###### END OF OPTIONS ######
 
 
-    # Run ML and measure runtime.
-    starttime = datetime.now()
+    # Run ML pipeline
     ml = main(
                 experiment=experiment,
                 use_models=use_models,
@@ -210,8 +223,7 @@ if __name__ == '__main__':
                 outdir=outdir,
                 scaler=scaler,
                 )
-    duration = datetime.now() - starttime
-    print(f'Script duration:  {duration}')
+
 
 
 
