@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.exceptions import ConvergenceWarning
 
+from MyFirstML.utils.input_output import write_to_csv
 from MyFirstML.utils.utils import are_dir_trees_equal
 
 warnings.simplefilter("ignore", category=ConvergenceWarning)
@@ -23,7 +24,7 @@ warnings.filterwarnings(action="ignore", message=r'.*Use subset.*of np.ndarray i
 
 class RunML(object):
 
-    def __init__(self, df, models, features, target, CV_cols, scores, outdir, scaler=None):
+    def __init__(self, df, models, features, target, CV_cols, scores, outdir, xscaler=None, yscaler=None):
         """
         Run a machine learning pipeline.
         :param df:
@@ -38,7 +39,8 @@ class RunML(object):
         self.features = features
         self.target = target
         self.CV_cols = CV_cols
-        self.scaler = scaler
+        self.init_x_scaler = xscaler
+        self.init_y_scaler = yscaler
         self.scores = scores
         self.outdir = Path(str(outdir))
 
@@ -123,11 +125,13 @@ class RunML(object):
         Save the data to disk.
         """
         print('Save data to disk.')
-        self.df_all_scores.to_csv(self.all_scores_outpath, index=False)
+        comment = 'All scores of the run.'
+        write_to_csv(df=self.df_all_scores, comment=comment, output_path=self.all_scores_outpath, verbose=False)
         print(f'\t- Saved scores to {self.all_scores_outpath.name}.')
 
         # Save the data.
-        self.df.to_csv(self.all_data_outpath, index=False)
+        comment = 'Data used for training and testing the models. One row for each sample.'
+        write_to_csv(df=self.df, comment=comment, output_path=self.all_data_outpath, verbose=False)
         print(f'\t- Saved data to {self.all_data_outpath.name}.')
 
         # Save the models.
@@ -217,11 +221,11 @@ class RunML(object):
         y_train = train_data[self.target].to_numpy()
         X_test = test_data[self.features].to_numpy()
 
-        # Scale the features and targets.
-        if self.scaler is not None:
-            # Fit the scaler only on the training data to prevent data leakage.
-            self.x_scaler = deepcopy(self.scaler).fit(X_train)
-            self.y_scaler = deepcopy(self.scaler).fit(y_train.reshape(-1, 1))
+        # Scale the features and targets. Fit the scaler only on the training data to prevent data leakage.
+        if self.init_x_scaler is not None:
+            self.x_scaler = deepcopy(self.init_x_scaler).fit(X_train)
+        if self.init_y_scaler is not None:
+            self.y_scaler = deepcopy(self.init_y_scaler).fit(y_train.reshape(-1, 1))
 
             X_train = self.x_scaler.transform(X_train)
             X_test = self.x_scaler.transform(X_test)
@@ -235,9 +239,10 @@ class RunML(object):
         y_pred_train = model.predict(X_train)
 
         # Unscale the features and targets.
-        if self.scaler is not None:
+        if self.init_x_scaler is not None:
             X_train = self.x_scaler.inverse_transform(X_train)
             X_test = self.x_scaler.inverse_transform(X_test)
+        if self.init_y_scaler is not None:
             y_train = self.y_scaler.inverse_transform(y_train.reshape(-1, 1))
             y_pred_test = self.y_scaler.inverse_transform(y_pred_test.reshape(-1, 1))
             y_pred_train = self.y_scaler.inverse_transform(y_pred_train.reshape(-1, 1))
@@ -326,25 +331,27 @@ class RunML(object):
             print(f'Reference run "{reference_run}" is the same as the current run. Exit without checking output files.')
             return
 
-        data_path = self.all_data_outpath.name
-        scores_path = self.all_scores_outpath.name
-        models_path = self.all_models_dir.name
-        plots_path = self.all_plots_dir.name
+        all_files_in_run = sorted([Path(f).name for f in os.listdir(self.outdir) if (Path(self.outdir, f).is_file() and not Path(f).name.startswith('.'))])
+        all_dirs_in_run = sorted([Path(f).name for f in os.listdir(self.outdir) if (Path(self.outdir, f).is_dir() and not Path(f).name.startswith('.'))])
 
-        for csv in [data_path, scores_path]:
-            if detailed:
-                print(f'\t- Checking {csv}')
-                df_new = pd.read_csv(Path(self.outdir, csv))
-                df_old = pd.read_csv(Path(reference_run, csv))
-                pd.testing.assert_frame_equal(df_new, df_old, check_like=True)
+        for f in all_files_in_run:
+            if not Path(reference_run, f).exists():
+                print(f'\t- WARNING: Output file {f} does not exist in reference run.')
             else:
-                same = filecmp.cmp(Path(self.outdir, csv), Path(reference_run, csv), shallow=False)
-                if not same:
-                    print(f'\t- WARNING: Output is not the same for {csv}')
-                else:
-                    print(f'\t- All good: {csv}')
 
-        for d in [models_path, plots_path]:
+                if detailed and f.endswith('.csv'):
+                    print(f'\t- Checking {f}')
+                    df_new = pd.read_csv(Path(self.outdir, f))
+                    df_old = pd.read_csv(Path(reference_run, f))
+                    pd.testing.assert_frame_equal(df_new, df_old, check_like=True)
+                else:
+                    same = filecmp.cmp(Path(self.outdir, f), Path(reference_run, f), shallow=False)
+                    if not same:
+                        print(f'\t- WARNING: Output is not the same for {f}')
+                    else:
+                        print(f'\t- All good: {f}')
+
+        for d in all_dirs_in_run:
             same = are_dir_trees_equal(Path(self.outdir, d), Path(reference_run, d))
             if not same:
                 print(f'\t- WARNING: Output is not the same for {d}')

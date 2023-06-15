@@ -1,0 +1,16 @@
+experiment: test
+dataset: ../../data/toy_datasets/regression/diabetes_toy_dataset.csv
+features: ['age', 'sex', 'bmi', 'bp', 's1', 's2', 's3', 's4', 's5', 's6']
+target: target
+CV: KFold
+n_reps: 5
+trainfrac: 0.8
+group: None
+scores: ['r2', 'MAE']
+outdir: ../../results/runs
+hparams_file: hparams.yml
+use_data_frac: None
+xscaler: StandardScaler()
+yscaler: StandardScaler()
+random_seed: 43
+use_models: ['1NN', 'LR', 'RF', 'XGB', 'NN', 'GP']

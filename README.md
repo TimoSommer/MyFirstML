@@ -20,5 +20,32 @@ Open the project in PyCharm and set the interpreter to the conda environment you
 ## How to use
 The main machine learning script is located at MyFirstML/machine_learning/run_simple_ML.py. Try to execute it and see if everything runs smoothly. Then, use this script as starting point for all your machine learning.
 
+### Input and output data
+Data is inputted in form of a .csv file and put into a pandas DataFrame(). This dataframe contains all the per-sample information, such as features, targets, predictions,  if a data point belongs to the train or test split etc. This makes it easy to add more columns if necessary. Because this script is supposed to be a first starting point for machine learning, tabular data is a good choice. However, the script can be easily generalized to CNNs or GNNs by providing a path to an image or graph and then let this model read in the data from the path.
+
+### Models
+As a simple start into machine learning, the script uses sklearn models and XGB in it's sklearn implementation and makes use of their .fit() and .predict() api. It can be easily adapted to models built using tensorflow, jax or pytorch by writing a wrapper providing the .fit() and .predict() api.
+
+### Train and test data splits
+In usual ML workflows, there is three types of data: the train set, the validation set and the test set. Models are trained on the train set, hyperparameters are optimized using the validation set and the final model performance is reported for the test set. For the sake of simplicity, MyFirstML restricts itself to train and test data (called 'train' and 'test'): models are trained on the train data and tested on the test data. In usual applications, a user would therefore first split off the real test data, and then use the rest of the data for trying out the machine learning pipeline and optimize hyperparameters. Only at the very end, the user would read in the entire dataset, label the test and train data accordingly and run MyFirstML a final time to get the performance on the test metrics.
+
+### Hyperparameter optimization
+MyFirstML is not intended to be a pipeline for optimizing hyperparameters, but to try out models. Therefore, hyperparameter optimization needs to be sourced out into one out of many existing frameworks for this purpose, e.g. SigOpt. The MyFirstML script can then be called from those other frameworks in an outer loop to do the model training and to report the performance on the validation dataset.
+
+### Saving and loading models and data
+Data is currently saved by saving the main dataframe (ml.df) and the scores dataframe (ml.df_all_scores) to csv. Models are currently saved using joblib. This means it is very easy to save and load models, but if you change the sklearn version, you might not be able to load the model anymore. If this is an issue, you could either save the model weights and load them into a new model, or use a different saving method.
+
+### Performance metrics
+The script is currently set up for regression problems and reports the r^2 value and the Mean Absolute Error (MAE) for test and train set. Usually, you would expect that a model has a slightly lower performance on the test set than the train set. If the difference between the two is very big, this can mean that your model is overfitting. In this case, you can try to play around with the hyperparameters of the model to reduce the overfitting. If the difference is very small, this can mean that your model is underfitting. In this case, you might want to try out a more complex model or add more expressive features to your dataset.  
+
+### Grouping
+Grouping of your dataset can make a lot of sense if you expect your dataset to be very clustered. In this case, it might make sense to not have random splis in test and train data, but to train on n-1 groups and to test on the nth group, to get an insight into the performance of the model in predicting completely new data. This is especially important for machine learning in natural sciences, where the aim often is to detect novel materials which are quite dissimilar to existing data points. To support this, you can provide the name of a column in your dataset to the option 'group'. Please make sure that the split into train and test split really works exactly the way you want it, since this is a non-trivial situation.
+
+### Data scaling
+Most machine learning models perform best if the data is scaled such that each feature/target has a normal distribution with a mean of 0 and a variance of 1. This is done by the StandardScaler() in sklearn. However, if you have data which varies on a logarithmic scale, it might also make sense to first the logarithm of the data and then to standard scale it. Currently the script just supports providing a single scaler for all features and one for all targets, but you can easily implement it so that you can provide a different scaler for each feature/target. As a note, models like Neural Networks and Gaussian Processes benefit a lot by the correct scaling, while other models like Linear Regression and Random Forest derivatives are insensitive to linear scaling (but not to non-linear scaling).
+
+
+
+
 ## Current limitations
 - In its current implementation, the script is made for regression problems, but classification problems are easy to add.

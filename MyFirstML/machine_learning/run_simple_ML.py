@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List
 from datetime import datetime
 from copy import deepcopy
+import shutil
 
 import numpy as np
 import sklearn
@@ -18,7 +19,7 @@ from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 
 from MyFirstML.machine_learning.RunML import RunML
-from MyFirstML.utils.input_output import make_new_output_directory
+from MyFirstML.utils.input_output import make_new_output_directory, write_to_yaml
 from MyFirstML.utils.ml_utils import load_data, get_hparams, get_train_test_splits
 
 
@@ -107,7 +108,7 @@ def get_all_models(hparams: dict, n_features: int, use_models: List[str]) -> dic
     return all_models
 
 
-def main(experiment, dataset, reference_run, features, target, CV, n_reps, trainfrac, group, scores, outdir, hparams_file, use_data_frac, scaler, random_seed, use_models):
+def main(experiment, dataset, reference_run, features, target, CV, n_reps, trainfrac, group, scores, outdir, hparams_file, use_data_frac, xscaler, yscaler, random_seed, use_models):
 
     ##############################################
     # Starting the experiment
@@ -144,6 +145,33 @@ def main(experiment, dataset, reference_run, features, target, CV, n_reps, train
     # Make new output directory in /rootdir
     run_outdir = make_new_output_directory(rootdir=outdir, label=experiment)
 
+    # Save hyperparameters to file in output directory
+    shutil.copy(str(hparams_file), str(run_outdir))
+
+    # Save experiment settings to file in output directory
+    write_to_yaml(
+        {
+            'experiment': experiment,
+            'dataset': dataset,
+            'features': features,
+            'target': target,
+            'CV': CV,
+            'n_reps': n_reps,
+            'trainfrac': trainfrac,
+            'group': group,
+            'scores': list(scores.keys()),
+            'outdir': outdir,
+            'hparams_file': hparams_file,
+            'use_data_frac': use_data_frac,
+            'xscaler': str(xscaler),
+            'yscaler': str(yscaler),
+            'random_seed': random_seed,
+            'use_models': use_models,
+        },
+        output_path=Path(run_outdir, 'settings.yml'),
+        comment=None,
+    )
+
     # Run experiment
     ml = RunML(
         df=df,
@@ -153,7 +181,8 @@ def main(experiment, dataset, reference_run, features, target, CV, n_reps, train
         CV_cols=CV_cols,
         scores=scores,
         outdir=run_outdir,
-        scaler=scaler,
+        xscaler=xscaler,
+        yscaler=yscaler,
     )
     ml.run()
 
@@ -190,7 +219,8 @@ if __name__ == '__main__':
     use_data_frac = None            # [float,None]: desired fraction of data points in range (0,1) or None for using all data.
     features = ['age', 'sex', 'bmi', 'bp', 's1', 's2', 's3', 's4', 's5', 's6']         # list: features to use
     target = 'target'               # str: target to predict
-    scaler = StandardScaler()       # scaler for scaling the input data before feeding into the model, None for no scaling
+    xscaler = StandardScaler()       # scaler for scaling the input features before feeding into the model, None for no scaling
+    yscaler = StandardScaler()       # scaler for scaling the input targets before feeding into the model, None for no scaling
     scores = {                      # dict: scores to use for evaluation of models
                 'r2': sklearn.metrics.r2_score,
                 'MAE': sklearn.metrics.mean_absolute_error,
@@ -221,7 +251,8 @@ if __name__ == '__main__':
                 random_seed=random_seed,
                 scores=scores,
                 outdir=outdir,
-                scaler=scaler,
+                xscaler=xscaler,
+                yscaler=yscaler,
                 )
 
 
