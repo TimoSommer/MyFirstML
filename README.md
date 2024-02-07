@@ -49,17 +49,17 @@ Most machine learning models perform best if the data is scaled such that each f
 
 ## Interesting links
 ### Python packages
-[scikit-learn](https://scikit-learn.org/stable/): An amazing package for everything around machine learning and machine learning workflows. It is used in this project as well. Very widely used!
-[List of scikit-learn related projects](https://scikit-learn.org/stable/related_projects.html): Very interesting list of python packages working together with scikit-learn.
-[pandas](https://pandas.pydata.org/): A package for everything around tabular data. Widely used!
-[dScribe](https://singroup.github.io/dscribe/latest/): A package for computing features of molecules and crystal structures. Most importantly, contains the widely used SOAP features. 
-[Yellowbrick](https://www.scikit-yb.org/en/latest/): A package for visualizing everything around machine learning, based on scikit-learn.
-[Seaborn](https://seaborn.pydata.org/): A package for plotting data. Uses matplotlib, but provides a lot of high-level functions and makes beautiful plots. Widely used!
+- [scikit-learn](https://scikit-learn.org/stable/): An amazing package for everything around machine learning and machine learning workflows. It is used in this project as well. Very widely used!
+- [List of scikit-learn related projects](https://scikit-learn.org/stable/related_projects.html): Very interesting list of python packages working together with scikit-learn.
+- [pandas](https://pandas.pydata.org/): A package for everything around tabular data. Widely used!
+- [dScribe](https://singroup.github.io/dscribe/latest/): A package for computing features of molecules and crystal structures. Most importantly, contains the widely used SOAP features. 
+- [Yellowbrick](https://www.scikit-yb.org/en/latest/): A package for visualizing everything around machine learning, based on scikit-learn.
+- [Seaborn](https://seaborn.pydata.org/): A package for plotting data. Uses matplotlib, but provides a lot of high-level functions and makes beautiful plots. Widely used!
 
 ### Papers
-[Retrospective on a decade of machine learning for chemical discovery](https://www.nature.com/articles/s41467-020-18556-9)
-[Recent advances and applications of deep learning methods in materials science](https://www.nature.com/articles/s41524-022-00734-6)
-[Machine Learning for Materials Scientists: An Introductory Guide toward Best Practices](https://pubs.acs.org/doi/10.1021/acs.chemmater.0c01907)
-[Materials Data toward Machine Learning: Advances and Challenges](https://pubs.acs.org/doi/10.1021/acs.jpclett.2c00576)
-[Materials Science in the AI age: high-throughput library generation, machine learning and a pathway from correlations to the underpinning physics](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7067066/)
-[Methods for comparing uncertainty quantifications for material property predictions](https://iopscience.iop.org/article/10.1088/2632-2153/ab7e1a)
+- [Retrospective on a decade of machine learning for chemical discovery](https://www.nature.com/articles/s41467-020-18556-9)
+- [Recent advances and applications of deep learning methods in materials science](https://www.nature.com/articles/s41524-022-00734-6)
+- [Machine Learning for Materials Scientists: An Introductory Guide toward Best Practices](https://pubs.acs.org/doi/10.1021/acs.chemmater.0c01907)
+- [Materials Data toward Machine Learning: Advances and Challenges](https://pubs.acs.org/doi/10.1021/acs.jpclett.2c00576)
+- [Materials Science in the AI age: high-throughput library generation, machine learning and a pathway from correlations to the underpinning physics](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7067066/)
+- [Methods for comparing uncertainty quantifications for material property predictions](https://iopscience.iop.org/article/10.1088/2632-2153/ab7e1a)
