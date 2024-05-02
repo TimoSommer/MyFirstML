@@ -5,7 +5,7 @@ from typing import Tuple, List, Union
 import os
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import RepeatedKFold, ShuffleSplit, LeaveOneGroupOut, GroupKFold, GroupShuffleSplit
+from sklearn.model_selection import RepeatedKFold, ShuffleSplit, LeaveOneGroupOut, LeaveOneOut, GroupKFold, GroupShuffleSplit
 import yaml
 from pathlib import Path
 
@@ -106,6 +106,12 @@ def get_train_test_splits(df, CV, n_reps, trainfrac=None, group=None) -> Tuple[p
         else:
             groups = df[group].to_numpy()
             split = GroupShuffleSplit(train_size=trainfrac, n_splits=n_reps).split(data_array, groups=groups)
+    elif CV == 'LeaveOneOut':
+        if group is None:
+            split = LeaveOneOut().split(data_array)
+        else:
+            groups = df[group].to_numpy()
+            split = LeaveOneGroupOut().split(data_array, groups=groups)
 
     # Create a column in df for each CV split and fill it with either 'train' or 'test'.
     CV_cols = []
