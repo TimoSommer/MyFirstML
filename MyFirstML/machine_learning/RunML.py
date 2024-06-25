@@ -18,21 +18,27 @@ from MyFirstML.utils.utils import are_dir_trees_equal
 
 warnings.simplefilter("ignore", category=ConvergenceWarning)
 warnings.simplefilter("ignore", category=FutureWarning)
+warnings.simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 warnings.filterwarnings(action="ignore", message=r'.*Use subset.*of np.ndarray is not recommended')
 
 
 
 class RunML(object):
 
-    def __init__(self, df, models, features, target, CV_cols, scores, outdir, xscaler=None, yscaler=None):
+    def __init__(self, df, models, features, target, CV_cols, scores, outdir, runtype, group, xscaler=None, yscaler=None):
         """
         Run a machine learning pipeline.
-        :param df:
-        :param models:
-        :param features:
-        :param target:
-        :param CV_cols:
-        :param scaler:
+        :param df: DataFrame with the data. One row for each sample.
+        :param models: Dictionary with the models to run. Keys are the model names, values are the models.
+        :param features: List of feature names (columns in the df) to use for training the models.
+        :param target: Name of the target column in the df.
+        :param CV_cols: List of column names in the df that contain the train/test splits for cross validation.
+        :param scores: Dictionary with the scores to calculate. Keys are the score names, values are the score functions.
+        :param outdir: Path to the output directory.
+        :param runtype: Type of the run, either 'regression', 'classification', or 'proba_classification'.
+        :param group: Name of the column in the df that contains the group information. If None, no grouping is done.
+        :param xscaler: Scaler for the features. If None, no scaling is done.
+        :param yscaler: Scaler for the target. If None, no scaling is done. Can only be used for regression runs.
         """
         self.df = df
         self.models = models
@@ -43,6 +49,8 @@ class RunML(object):
         self.init_y_scaler = yscaler
         self.scores = scores
         self.outdir = Path(str(outdir))
+        self.runtype = runtype
+        self.group_colname = group
 
         self.n_data = len(df)
         self.n_features = len(features)
@@ -57,6 +65,12 @@ class RunML(object):
         self.original_dir = None
         self.df_all_scores = None
         self.trained_models = None
+
+        # Check if inputs make sense
+        if self.runtype not in ['regression', 'classification', 'proba_classification']:
+            raise ValueError(f'runtype must be either "regression", "classification", or "proba_classification", but is "{self.runtype}".')
+        if self.runtype in ['classification', 'proba_classification'] and self.init_y_scaler is not None:
+            raise ValueError('y_scaler must be None for classification runs.')
 
     def run(self):
         """
@@ -235,8 +249,17 @@ class RunML(object):
         model.fit(X_train, y_train)
 
         # Predict the test data.
-        y_pred_test = model.predict(X_test)
-        y_pred_train = model.predict(X_train)
+        if self.runtype in ['regression', 'classification']:
+            y_pred_test = model.predict(X_test)
+            y_pred_train = model.predict(X_train)
+        elif self.runtype == 'proba_classification':
+            if set(y_train) != {0, 1}:
+                y_train_values = set(y_train)
+                raise ValueError(f'y_train must only contain 0 or 1 for runtype=`proba_classification`. Currently, y_train contains these unique values: {y_train_values}.')
+            index_of_class_1 = model.classes_.tolist().index(1)
+            y_pred_test = model.predict_proba(X_test)[: ,index_of_class_1]
+            y_pred_train = model.predict_proba(X_train)[: ,index_of_class_1]
+
 
         # Unscale the features and targets.
         if self.init_x_scaler is not None:
@@ -280,7 +303,12 @@ class RunML(object):
                     is_CV = self.df[CV_col] == CV
                     y_true = self.df.loc[is_CV, self.target]
                     y_pred = self.df.loc[is_CV, pred_colname]
-                    score_value = score_func(y_true, y_pred)
+
+                    try:
+                        group = self.df.loc[is_CV, self.group_colname]
+                        score_value = score_func(y_true=y_true, y_pred=y_pred, group=group)
+                    except (TypeError, KeyError):
+                        score_value = score_func(y_true=y_true, y_pred=y_pred)
 
                     all_scores.append({
                                         'value': score_value,

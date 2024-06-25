@@ -14,3 +14,4 @@ xscaler: StandardScaler()
 yscaler: StandardScaler()
 random_seed: 43
 use_models: ['1NN', 'LR', 'RF', 'XGB', 'NN', 'GP']
+runtype: regression
